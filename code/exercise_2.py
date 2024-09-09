@@ -1,5 +1,5 @@
 import pandas as pd
-temp = pd.read_csv("data/global-temperatures.csv", sep="\s+", skiprows = [0,1,2,3,4,5,6], header=None)
+temp = pd.read_csv("../data/global-temperatures.csv", sep="\s+", skiprows = [0,1,2,3,4,5,6], header=None)
 
 cov_matrix = temp.cov()
 cov_singular = temp[1].cov(temp[0])
