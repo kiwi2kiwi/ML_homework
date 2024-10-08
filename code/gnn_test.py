@@ -51,7 +51,7 @@ warnings.filterwarnings("ignore")
 
 # Root mean squared error
 loss_fn = torch.nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
 # Use GPU for training
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -63,10 +63,10 @@ NUM_GRAPHS_PER_BATCH = 8
 loader = DataLoader(data[:int(data_size * 0.7)],
                     batch_size=NUM_GRAPHS_PER_BATCH, shuffle=True)
 validation_loader = DataLoader(data[int(data_size * 0.7):int(data_size * 0.8)],
-                    batch_size=NUM_GRAPHS_PER_BATCH, shuffle=True)
+                    batch_size=10000, shuffle=True)
 
 test_loader = DataLoader(data[int(data_size * 0.8):],
-                         batch_size=NUM_GRAPHS_PER_BATCH, shuffle=True)
+                         batch_size=10000, shuffle=True)
 
 
 def train(data):
@@ -94,7 +94,7 @@ losses = []
 val_losses_plt = torch.tensor([])
 stopping = False
 epochs = 1000
-early_stopper = gnn_arch_ES.EarlyStopper(patience=500, min_delta=0.1)
+early_stopper = gnn_arch_ES.EarlyStopper(patience=30, min_delta=0.1)
 
 for epoch in range(epochs):
     loss, h = train(data)
@@ -111,7 +111,7 @@ for epoch in range(epochs):
             # Calculating the loss and gradients
             loss = loss_fn(pred, batch.y)
             val_losses = torch.cat((val_losses, loss.unsqueeze(0)), 0)
-        if early_stopper.early_stop(torch.mean(val_losses)):
+        if early_stopper.early_stop(torch.mean(val_losses), model):
             stopping = True
             print("Early stopping at Epoch: ", epoch)
         val_losses_plt = torch.cat((val_losses_plt, torch.mean(val_losses).unsqueeze(0)), 0)
@@ -140,6 +140,9 @@ y_pred_list = []
 y_reals = torch.tensor([])
 y_preds = torch.tensor([])
 
+
+# Get the best performing model
+model = early_stopper.model
 # Loop through the test loader to get batches
 with torch.no_grad():  # Disable gradient calculation
     for test_batch in test_loader:
